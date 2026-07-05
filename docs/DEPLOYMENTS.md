@@ -10,7 +10,7 @@
 
 | Versión | Fecha | Commit | Tag | URL | Notas |
 |---------|-------|--------|-----|-----|-------|
-| v0.1.0   | 2026-07-05 | `1b5b552` | [v0.1.0](https://github.com/JoseGutierrezRiffo/pos-pyme/releases/tag/v0.1.0) | _pendiente_ | Initial MVP |
+| v0.1.0 | 2026-07-05 | `a724726` | [v0.1.0](https://github.com/JoseGutierrezRiffo/pos-pyme/releases/tag/v0.1.0) | _pendiente_ | Initial MVP — Initial release via `gh release create` |
 
 ## Staging / Preview
 
