@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Pre-commit hook: recuerda correr el review antes de commitear
+#
+# Para activar:
+#   git config core.hooksPath .githooks
+#
+# Para bypassear:
+#   git commit --no-verify
+
+# Skip si no es un cambio de código (solo docs, etc.)
+CHANGED=$(git diff --cached --name-only)
+if [ -z "$CHANGED" ]; then
+  exit 0
+fi
+
+# Si todos los cambios son docs/markdown, no preguntar
+NON_DOC=$(echo "$CHANGED" | grep -v -E '\.(md|txt)$|^docs/|^README' | head -1)
+if [ -z "$NON_DOC" ]; then
+  exit 0
+fi
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔍  Pre-commit: cambios de código detectados"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "Antes de commitear, considerá correr el review:"
+echo ""
+echo "  bash scripts/quick-review.sh            # genera prompt, pegar en opencode"
+echo "  bash scripts/quick-review-llm.sh        # auto con opencode CLI"
+echo ""
+echo "Si querés skipear el review (confiaste en el código):"
+echo "  git commit --no-verify"
+echo ""
+echo "Si querés desactivar este hook para siempre:"
+echo "  git config core.hooksPath /dev/null"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
