@@ -1,0 +1,42 @@
+name: Release Please
+
+# Crea PRs automáticos que bumpean version + actualizan CHANGELOG
+# basado en conventional commits. Cuando se mergea el PR, se crea el tag
+# y se dispara release.yml.
+#
+# Conventional commits:
+#   feat:        → minor bump (0.1.0 → 0.2.0)
+#   fix:         → patch bump (0.1.0 → 0.1.1)
+#   feat!:       → major bump (0.1.0 → 1.0.0) [breaking change]
+#   chore:, docs: → no bump
+#
+# Setup: este workflow crea un PR a master cuando hay commits releasables.
+# Vos revisás el PR (ver el changelog propuesto), mergeás, y el tag se crea.
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: node  # usa semver de package.json
+          package-name: pos-pyme
+          changelog-path: docs/CHANGELOG.md
+          changelog-sections: >-
+            { "feat": "Features", "fix": "Bug Fixes",
+              "perf": "Performance", "refactor": "Refactors",
+              "docs": "Documentation", "test": "Tests",
+              "build": "Build System", "ci": "CI/CD",
+              "chore": "Chores", "revert": "Reverts" }
+          # Solo crear PR si hay commits releasables desde el último tag
+          # (cambiar a 'always' si querés PR en cada push)
+          pull-request-title-pattern: "chore: release v{{version}}"

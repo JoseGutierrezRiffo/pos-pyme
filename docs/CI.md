@@ -7,7 +7,102 @@
 | Workflow | Trigger | Jobs | Qué hace |
 |----------|---------|------|----------|
 | `ci.yml` | push a master/main, PRs | `quality-gates`, `security-audit`, `summary` | Las 4 herramientas core + audit de secrets |
-| `e2e.yml` | igual | `e2e` (opcional) | Tests Playwright contra Supabase real (solo si secrets configurados) |
+| `e2e.yml` | manual (`workflow_dispatch`) | `e2e` (opcional) | Tests Playwright contra Supabase real (solo si secrets configurados) |
+| `release-please.yml` | push a master | auto-PR | Crea PR automático bumpeando version + actualizando CHANGELOG |
+| `release.yml` | push de tag `v*` | `release` | Build artifacts + GitHub Release + actualiza DEPLOYMENTS.md |
+
+## Versionado y releases
+
+### Conventional commits
+
+Usamos [Conventional Commits](https://www.conventionalcommits.org/) para que release-please sepa qué tipo de bump aplicar:
+
+| Prefijo | Bump | Ejemplo |
+|---------|------|---------|
+| `feat:` | minor (0.1.0 → 0.2.0) | `feat: agregar módulo de inventario` |
+| `fix:` | patch (0.1.0 → 0.1.1) | `fix: RLS impersonation en sales` |
+| `feat!:` o `BREAKING CHANGE:` | major (0.x.0 → 1.0.0) | `feat!: cambiar a Supabase v3 API` |
+| `chore:`, `docs:`, `test:`, `refactor:`, `ci:` | ninguno | `docs: actualizar README` |
+
+### Flujo de release
+
+```
+1. Hacés cambios en feature branch, commiteás con conventional commit
+2. Mergeás PR a master → CI corre (quality gates)
+3. release-please.yml detecta commits releasables
+4. Crea PR automático "chore: release v0.X.Y" con CHANGELOG actualizado
+5. Vos revisás el PR, mergeás
+6. Al mergear, release-please crea el tag v0.X.Y
+7. release.yml se dispara con el tag:
+   - Build artifacts
+   - Crea GitHub Release con artifacts + notas
+   - Actualiza docs/DEPLOYMENTS.md
+   - (Opcional) Aplica migrations a Supabase prod
+```
+
+### Crear release manual (sin esperar a release-please)
+
+```bash
+# 1. Bump version en package.json
+npm version patch  # o minor / major
+
+# 2. Commit
+git add package.json
+git commit -m "chore: release v0.1.1"
+
+# 3. Tag + push
+git tag -a v0.1.1 -m "Release v0.1.1: hotfix RLS"
+git push --follow-tags
+
+# → release.yml se dispara
+# → GitHub Release con artifacts
+# → DEPLOYMENTS.md actualizado
+```
+
+### Rollback
+
+3 opciones según urgencia:
+
+```bash
+# A) Hotfix forward (recomendado, preserva historial)
+git checkout -b hotfix/v0.1.2 v0.1.1
+# ... fix ...
+git commit -m "fix: critical issue X"
+git tag v0.1.2
+git push --tags
+
+# B) Rollback a tag anterior (rápido)
+git checkout v0.1.1
+# Re-deployar con ese tag (manual o via CI)
+
+# C) Revert (preserva historial completo, agrega commit de rollback)
+git revert --no-commit v0.2.0..HEAD
+git commit -m "revert: back to v0.1.1 due to issue X"
+git push
+```
+
+### Ver qué está corriendo
+
+```bash
+# Último tag
+git describe --tags --abbrev=0
+
+# Último release en GitHub
+gh release list --repo JoseGutierrezRiffo/pos-pyme
+
+# Historial completo
+cat docs/DEPLOYMENTS.md
+```
+
+## Branch protection recomendado
+
+En **Settings → Branches → Branch protection rules** para `master`:
+
+- ✅ Require a pull request before merging
+- ✅ Require approvals: 1 (si trabajás con otros)
+- ✅ Require status checks to pass before merging:
+  - `Quality Gates`
+- ✅ Require branches to be up to date
 
 ## Quality Gates (ci.yml → quality-gates job)
 

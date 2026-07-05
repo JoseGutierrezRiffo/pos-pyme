@@ -1,0 +1,205 @@
+name: Release
+
+# Se dispara cuando se pushea un tag v* (ej: v0.1.0, v0.2.0).
+# Crea GitHub Release con artifacts + actualiza docs/DEPLOYMENTS.md.
+#
+# Para deploys manuales (preview, hotfix, rollback), usar
+# workflow_dispatch con inputs custom.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Tag a deployar (ej: v0.1.0). Default: tag actual.'
+        required: false
+        default: ''
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false  # no cancelar releases en progreso
+
+jobs:
+  release:
+    name: Build + GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # necesario para tags y changelog
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Building ${VERSION}..."
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.10.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate version matches package.json
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "${{ steps.version.outputs.VERSION }}" != "v${PKG_VERSION}" ]; then
+            echo "❌ Tag v${{ steps.version.outputs.VERSION }} doesn't match package.json v${PKG_VERSION}"
+            echo "Bump package.json to ${{ steps.version.outputs.VERSION }} first"
+            exit 1
+          fi
+          echo "✓ Tag matches package.json v${PKG_VERSION}"
+
+      - name: Quality gates
+        run: |
+          pnpm typecheck
+          pnpm lint
+          pnpm build
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build production artifacts
+        run: |
+          mkdir -p release-artifacts
+          cp -r apps/api/dist release-artifacts/api 2>/dev/null || true
+          cp -r apps/web-admin/dist release-artifacts/web-admin
+          cp -r apps/web-worker/dist release-artifacts/web-worker
+          cp supabase/migrations/*.sql release-artifacts/ 2>/dev/null || true
+          cp package.json release-artifacts/
+          cp pnpm-lock.yaml release-artifacts/
+          tar -czf release-${{ steps.version.outputs.VERSION }}.tar.gz -C release-artifacts .
+          echo "📦 Created release-${{ steps.version.outputs.VERSION }}.tar.gz"
+          ls -la release-${{ steps.version.outputs.VERSION }}.tar.gz
+
+      - name: Get commit info
+        id: commit
+        run: |
+          COMMIT_SHA=$(git rev-parse HEAD)
+          COMMIT_SHORT=$(git rev-parse --short HEAD)
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          COMMIT_DATE=$(git log -1 --pretty=%ci | head -1)
+          echo "SHA=${COMMIT_SHA}" >> $GITHUB_OUTPUT
+          echo "SHORT=${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+          echo "MESSAGE=${COMMIT_MESSAGE}" >> $GITHUB_OUTPUT
+          echo "DATE=${COMMIT_DATE}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ steps.version.outputs.VERSION }}
+          draft: false
+          generate_release_notes: true
+          files: |
+            release-${{ steps.version.outputs.VERSION }}.tar.gz
+          body: |
+            ## 📦 Release ${{ steps.version.outputs.VERSION }}
+
+            **Commit:** [`${{ steps.commit.outputs.SHORT }}`](https://github.com/${{ github.repository }}/commit/${{ steps.commit.outputs.SHA }})
+            **Date:** ${{ steps.commit.outputs.DATE }}
+
+            ## 📋 Changelog
+
+            Ver [docs/CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ steps.version.outputs.VERSION }}/docs/CHANGELOG.md) para detalle de cambios.
+
+            ## 🚀 Deploy artifacts
+
+            El archivo `release-${{ steps.version.outputs.VERSION }}.tar.gz` incluye:
+            - `api/dist` — NestJS compilado
+            - `web-admin/dist` — Bundle Vite del portal admin
+            - `web-worker/dist` — Bundle Vite del portal POS
+            - `supabase/migrations/*.sql` — Migrations para aplicar a la DB
+            - `package.json` + `pnpm-lock.yaml` — Para reproducible install
+
+            ## 🗃️ Database migrations
+
+            Para deployar las migrations a producción:
+
+            ```bash
+            # Local (con Supabase CLI)
+            supabase db push
+
+            # O aplicar manualmente via Supabase Dashboard → SQL Editor
+            # Pegar los archivos en orden desde supabase/migrations/
+            ```
+
+            ## 🔙 Rollback
+
+            Si encontrás un bug crítico en esta versión:
+
+            ```bash
+            # Opción A: Hotfix forward (recomendado)
+            git checkout -b hotfix/${{ steps.version.outputs.VERSION }}-fix v${{ steps.version.outputs.VERSION }}
+            # ... fix ...
+            git commit -m "fix: ..."
+            git tag v${{ steps.version.outputs.VERSION }}-fix
+            git push --tags
+
+            # Opción B: Rollback al tag anterior
+            git checkout v0.0.X  # tag anterior
+            # Re-deployar con ese tag
+            ```
+
+            ## 📊 Métricas
+
+            Ver [docs/DEPLOYMENTS.md](https://github.com/${{ github.repository }}/blob/master/docs/DEPLOYMENTS.md) para el historial completo.
+
+      - name: Update DEPLOYMENTS.md
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          COMMIT="${{ steps.commit.outputs.SHORT }}"
+
+          # Insertar nueva entrada en la tabla de producción (después del header)
+          python3 << PYEOF
+          import re
+          with open('docs/DEPLOYMENTS.md') as f:
+              content = f.read()
+          # Insertar nueva fila al inicio de la tabla de producción
+          new_row = f'| v0.1.0-placeholder | ${{TODAY}} | \`{COMMIT}\` | [v${{VERSION}}](https://github.com/${{ github.repository }}/releases/tag/${{VERSION}}) | _pendiente_ | Auto-deploy |'
+          # Reemplazar placeholder con datos reales
+          new_row = f'| v0.1.0 | ${{TODAY}} | \`{COMMIT}\` | [v${{VERSION}}](https://github.com/${{ github.repository }}/releases/tag/${{VERSION}}) | _pendiente_ | Release ${{VERSION}} |'
+          # Insertar después del header de Producción
+          pattern = r'(## Producción\s*\n\s*\| Versión.*?\|.*?\|.*?\|.*?\|.*?\|.*?\n\s*\n\s*)'
+          replacement = r'\1' + new_row + '\n\n'
+          new_content = re.sub(pattern, replacement, content)
+          if new_content == content:
+              # Si no se hizo match, agregar al inicio
+              new_content = content.replace('| v0.1.0', f'| v0.1.0\n{new_row}', 1) if '| v0.1.0 | 2026-07-05' in content else new_row + '\n\n' + content
+          with open('docs/DEPLOYMENTS.md', 'w') as f:
+              f.write(new_content)
+          print('✓ docs/DEPLOYMENTS.md updated')
+          PYEOF
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/DEPLOYMENTS.md
+          git commit -m "docs: record deploy ${{ steps.version.outputs.VERSION }} (${{ steps.commit.outputs.SHORT }})" || echo "Nothing to commit"
+          git push || echo "Push failed (may be protected branch)"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🎉 Release ${{ steps.version.outputs.VERSION }} published"
+          echo "Commit: ${{ steps.commit.outputs.SHORT }}"
+          echo "Message: ${{ steps.commit.outputs.MESSAGE }}"
+          echo ""
+          echo "📥 Install: gh release download v${{ steps.version.outputs.VERSION }}"
+          echo "📊 View: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.VERSION }}"
