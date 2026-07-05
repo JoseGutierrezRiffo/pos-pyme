@@ -1,28 +1,19 @@
 name: E2E Tests
 
-# Solo corre si los secrets están configurados (repositorio personal: opcional).
-# Para activar: Settings → Secrets and variables → Actions, agregar:
+# Solo corre si los secrets de Supabase están configurados.
+# Setup: Settings → Secrets and variables → Actions:
 #   - E2E_SUPABASE_URL
 #   - E2E_SUPABASE_ANON_KEY
 #   - E2E_SERVICE_ROLE_KEY
 
 on:
-  push:
-    branches: [master, main]
-  pull_request:
-    branches: [master, main]
-  workflow_dispatch:  # permite correr manualmente desde la UI
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_dispatch:  # manual trigger desde la UI de GitHub
 
 jobs:
   e2e:
     name: Playwright E2E (worker + admin)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: ${{ secrets.E2E_SUPABASE_ANON_KEY != '' }}
 
     steps:
       - name: Checkout
@@ -60,11 +51,16 @@ jobs:
 
       - name: Start backend
         run: pnpm dev:api &
-        env:
-          PORT: 3000
 
       - name: Wait for backend
-        run: npx wait-on http://localhost:3000/api/auth/me -t 30000 || true
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/api/auth/me > /dev/null 2>&1; then
+              echo "Backend ready"
+              break
+            fi
+            sleep 1
+          done
 
       - name: Run E2E tests
         run: pnpm test:e2e
