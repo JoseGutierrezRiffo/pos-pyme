@@ -1,6 +1,6 @@
 {
   "name": "pos-pyme",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "POS, inventario y turnos para micro-PYMEs",
   "type": "module",
@@ -22,8 +22,8 @@
     "dev:worker-api": "turbo run dev --filter=@pos-pyme/api --filter=@pos-pyme/web-worker",
     "dev:admin-api": "turbo run dev --filter=@pos-pyme/api --filter=@pos-pyme/web-admin",
     "dev:fresh": "pnpm ports:kill && pnpm dev",
-    "ports:check": "lsof -i :3000,5173,5174 2>/dev/null || echo '\u2705 Puertos libres'",
-    "ports:kill": "lsof -ti :3000,5173,5174 2>/dev/null | xargs kill -9 2>/dev/null; echo '\ud83e\uddf9 Puertos limpiados'",
+    "ports:check": "lsof -i :3000,5173,5174 2>/dev/null || echo '✅ Puertos libres'",
+    "ports:kill": "lsof -ti :3000,5173,5174 2>/dev/null | xargs kill -9 2>/dev/null; echo '🧹 Puertos limpiados'",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
