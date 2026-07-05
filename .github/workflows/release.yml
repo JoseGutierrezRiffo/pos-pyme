@@ -19,7 +19,8 @@ on:
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: false  # no cancelar releases en progreso
+  # No cancelamos un release en progreso
+  cancel-in-progress: ${{ false }}
 
 jobs:
   release:
