@@ -1,6 +1,6 @@
 /**
  * Reglas de negocio para el cuadre de caja.
- * Fuente de verdad: obsidian/04_Business_Rules/REGLA_Cuadre_Caja.md
+ * Regla de cuadre de caja (ver docs/PRD.md)
  */
 
 /**

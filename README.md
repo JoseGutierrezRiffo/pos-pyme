@@ -27,8 +27,16 @@ Sistema de inventario, turnos y caja para micro-PYMEs.
 │   ├── supabase-types/ # Tipos auto-generados desde Supabase
 │   └── ui/             # Componentes compartidos
 ├── supabase/
-│   └── migrations/     # Migraciones SQL
-└── obsidian/           # Vault de conocimiento (PRD, personas, casos)
+│   └── migrations/     # Migraciones SQL (incluye seed 0009)
+├── docs/
+│   ├── PRD.md          # Product Requirements Document
+│   ├── CI.md           # Setup de GitHub Actions
+│   ├── TEST_PLAN.md    # Plan de pruebas E2E
+│   ├── business-model.md
+│   └── templates/
+│       └── PERSONA.md  # Plantilla de user persona
+└── tests/
+    └── e2e/            # Tests Playwright (12 tests)
 ```
 
 ## 🚀 Setup
@@ -122,9 +130,9 @@ pnpm test:e2e -g "A4.1"
 
 ## 📚 Documentación
 
-- **PRD**: `obsidian/02_PRD/PRD_Master.md`
+- **PRD**: `docs/PRD.md`
 - **Reglas de negocio**: definidas en `packages/business-rules/`
-- **Plantillas Obsidian**: `obsidian/99_Templates/`
+- **Plantillas**: `docs/templates/` (e.g. `PERSONA.md`)
 - **CI/CD**: [`docs/CI.md`](docs/CI.md) — workflows de GitHub Actions
 
 ## ✅ Quality Gates

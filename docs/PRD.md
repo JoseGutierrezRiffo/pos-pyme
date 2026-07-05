@@ -1,15 +1,14 @@
----
-tipo: prd
-estado: draft | vivo | congelado
-version: 0.1.0
-fecha_creacion: YYYY-MM-DD
-ultima_actualizacion: YYYY-MM-DD
-producto: 'POS Pyme — Inventario + Turnos + Caja'
-autor: '[[Tu_Nombre]]'
-tags: [prd, mvp, producto]
----
+# PRD — POS Pyme
 
-# PRD_Master — POS Pyme
+> Documento de producto: única fuente de verdad del alcance del MVP.
+> Cualquier épica o historia que no esté acá, no se construye.
+
+**Producto:** POS Pyme — Inventario + Turnos + Caja
+**Versión:** 0.1.0
+**Estado:** draft
+**Tags:** prd, mvp, producto
+
+---
 
 > 📋 **Documento vivo**. Este es el **único lugar** donde vive la verdad del alcance del MVP.
 > Cualquier épica o historia que no esté acá, **no se construye**.
@@ -59,7 +58,7 @@ Esta métrica captura simultáneamente:
 
 ## 5. 🚫 Fuera del Alcance (Out of Scope)
 
-> Lista explícita para evitar scope creep. Si alguien pide algo de acá, va a `[[06_Future_Roadmap]]`.
+> Lista explícita para evitar scope creep. Si alguien pide algo de acá, va a la sección "Roadmap Post-MVP" más abajo.
 
 - ❌ Boleta electrónica / DTE / SII
 - ❌ Multi-sucursal / multi-tienda
@@ -79,9 +78,9 @@ Esta métrica captura simultáneamente:
 
 | Persona                        | Descripción                                         | Doc                    |
 | ------------------------------ | --------------------------------------------------- | ---------------------- |
-| **Doña Rosa** (Admin)          | Dueña de minimarket, 50 años, no sabe de tecnología | [[PERSONA_001_Rosa]]   |
-| **Matías** (Worker)            | Cajero joven, 22 años, nativo digital, rotativo     | [[PERSONA_002_Matias]] |
-| **Don Hernán** (Admin ausente) | Dueño que no está en el local, delega todo          | [[PERSONA_003_Hernan]] |
+| **Doña Rosa** (Admin)          | Dueña de minimarket, 50 años, no sabe de tecnología | Persona: Rosa   |
+| **Matías** (Worker)            | Cajero joven, 22 años, nativo digital, rotativo     | Persona: Matias |
+| **Don Hernán** (Admin ausente) | Dueño que no está en el local, delega todo          | Persona: Hernan |
 
 ---
 
@@ -89,10 +88,10 @@ Esta métrica captura simultáneamente:
 
 | #   | Épica                                                  | Prioridad | Estado       |
 | --- | ------------------------------------------------------ | --------- | ------------ |
-| E1  | [[EPICA_Auth]] — Autenticación y roles                 | P0        | 📐 En diseño |
-| E2  | [[EPICA_Turnos_Caja]] — Sistema de turnos y caja       | P0        | 📐 En diseño |
-| E3  | [[EPICA_Inventario_POS]] — Inventario y POS móvil      | P0        | 📐 En diseño |
-| E4  | [[EPICA_Dashboard_Admin]] — Dashboard y notificaciones | P0        | 📐 En diseño |
+| E1  | Épica Auth — Autenticación y roles                 | P0        | 📐 En diseño |
+| E2  | Épica Turnos_Caja — Sistema de turnos y caja       | P0        | 📐 En diseño |
+| E3  | Épica Inventario_POS — Inventario y POS móvil      | P0        | 📐 En diseño |
+| E4  | Épica Dashboard_Admin — Dashboard y notificaciones | P0        | 📐 En diseño |
 | E5  | (Fase 2) Modo offline PWA                              | P1        | 💤 Backlog   |
 | E6  | (Fase 2) Variantes de productos                        | P1        | 💤 Backlog   |
 
@@ -140,7 +139,7 @@ Esta métrica captura simultáneamente:
 
 > **Problema**: Sin control de turnos, no se sabe quién perdió plata, cuándo ni por qué. La caja es un agujero negro.
 
-> 📐 Regla de negocio: [[REGLA_Cuadre_Caja]]
+> 📐 Regla de negocio: REGLA_Cuadre_Caja
 
 **US-010**: Como **trabajador**, quiero **abrir mi turno ingresando el efectivo inicial**, para **dejar registro de con cuánto empecé**.
 
@@ -356,18 +355,18 @@ Esta métrica captura simultáneamente:
 
 ### En este vault
 
-- **Reglas de negocio**: [[04_Business_Rules]]
-- **Casos de uso**: [[01_Product_Discovery/Customer_Use_Cases]]
-- **Personas**: [[PERSONA_001_Rosa]], [[PERSONA_002_Matias]]
-- **Roadmap post-MVP**: [[06_Future_Roadmap]]
-- **Plantilla de historia de usuario**: [[TPL_User_Story]]
-- **Plantilla de ADR**: [[TPL_ADR]]
+- **Reglas de negocio**: ver `packages/business-rules/`
+- **Casos de uso**: proximamente en `docs/`
+- **Personas**: Persona: Rosa, Persona: Matias
+- **Roadmap post-MVP**: sección "Roadmap Post-MVP" más abajo
+- **Plantilla de historia de usuario**: TPL_User_Story
+- **Plantilla de ADR**: TPL_ADR
 
 ### Externos
 
-- **Migración SQL inicial**: `[[supabase/migrations/0001_initial_schema.sql]]`
-- **Backend NestJS**: `[[backend/src/auth/guards/roles.guard.ts]]`
-- **Frontend POS**: `[[frontend/src/pages/worker/pos.tsx]]`
+- **Migración SQL inicial**: `supabase/migrations/0001_initial_schema.sql`
+- **Backend NestJS**: `backend/src/auth/guards/roles.guard.ts`
+- **Frontend POS**: `frontend/src/pages/worker/pos.tsx`
 
 ---
 
@@ -375,4 +374,4 @@ Esta métrica captura simultáneamente:
 
 | Fecha      | Versión | Cambio                                       | Autor         |
 | ---------- | ------- | -------------------------------------------- | ------------- |
-| YYYY-MM-DD | 0.1.0   | Creación inicial con 4 épicas y 17 historias | [[Tu_Nombre]] |
+| YYYY-MM-DD | 0.1.0   | Creación inicial con 4 épicas y 17 historias | Tu_Nombre |
