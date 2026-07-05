@@ -196,3 +196,62 @@ pnpm test:e2e
 ```
 
 Si algún check falla localmente, va a fallar en CI. Iterá hasta que pase antes de pushear.
+## 📚 Lecciones aprendidas (release pipeline)
+
+> **Regla de oro:** si un workflow falla 3+ veces con el mismo error, **pará y diagnosticá la causa raíz**. No parchees con variantes aleatorias.
+
+### Errores reales que cometimos (y cómo evitarlos)
+
+| Error | Iteraciones desperdiciadas | Causa real | Cómo evitarlo |
+|-------|---------------------------|-------------|---------------|
+| 9 runs de `release.yml` fallando con "workflow file issue" | 5+ intentos cambiando versiones, `concurrency: false`, `inputs`, etc. | El workflow era innecesario: `gh release create` (CLI) hace lo mismo sin gastar minutos de CI. | Empezar por la opción más simple. Releases manuales con `gh release create v0.1.0 --notes-file docs/CHANGELOG.md` es suficiente para un proyecto personal. Solo agregar CI cuando duela hacerlo manual. |
+| `release-please` pidiendo manifest file | 1 intento | Config file estaba en el lugar equivocado | Si usás `release-please`, el config va en `release-please-config.json` en la raíz. Pero para un proyecto personal es over-engineering. |
+| 2 workflows (e2e + release) corriendo en push y reportando "failure" sin jobs | Confusión innecesaria | `if: ${{ secrets.X != '' }}` salta el job pero GitHub marca el run como failure si el job era el único | Workflows opcionales deben usar `workflow_dispatch` trigger (manual) o `concurrency.cancel-in-progress: false` con un job que tenga una salida explícita |
+
+### Principios para CI en proyectos personales
+
+1. **Menos workflows = menos superficie de falla.** Empezá con un solo workflow que corra todas las quality gates. Agregá más solo cuando duela hacerlo manual.
+2. **Releases locales > CI para releases.** `gh release create v0.X.Y --notes-file CHANGELOG.md` tarda 5 segundos. Un workflow que hace lo mismo tarda 5 minutos + debugging.
+3. **Validá workflows localmente antes de pushear.** `act` (https://github.com/nektos/act) corre GitHub Actions localmente. Pero requiere Docker.
+4. **Si un workflow falla con "workflow file issue"**, el problema suele ser:
+   - Action que no existe (o versión que no existe)
+   - YAML mal formado (tab en lugar de spaces, indentación rota)
+   - `concurrency: cancel-in-progress: false` (GitHub parser rechaza boolean false; usar `${{ false }}`)
+5. **Medí antes de agregar.** "1 release por mes" no justifica 30 min de debugging de CI.
+
+### Cuando SÍ vale la pena CI de release
+
+- Equipo > 2 personas haciendo releases frecuentes (> 1/semana)
+- Necesitás artifact binario reproducible (ejecutable, container, release tarball)
+- Querés que `gh release list` muestre histórico automático
+- Compliance requiere traceability de cada artifact publicado
+
+## 📚 Lecciones aprendidas (release pipeline)
+
+> **Regla de oro:** si un workflow falla 3+ veces con el mismo error, **pará y diagnosticá la causa raíz**. No parchees con variantes aleatorias.
+
+### Errores reales que cometimos (y cómo evitarlos)
+
+| Error | Iteraciones desperdiciadas | Causa real | Cómo evitarlo |
+|-------|---------------------------|-------------|---------------|
+| 9 runs de `release.yml` fallando con "workflow file issue" | 5+ intentos cambiando versiones, `concurrency: false`, `inputs`, etc. | El workflow era innecesario: `gh release create` (CLI) hace lo mismo sin gastar minutos de CI. | Empezar por la opción más simple. Releases manuales con `gh release create v0.1.0 --notes-file docs/CHANGELOG.md` es suficiente para un proyecto personal. Solo agregar CI cuando duela hacerlo manual. |
+| `release-please` pidiendo manifest file | 1 intento | Config file estaba en el lugar equivocado | Si usás `release-please`, el config va en `release-please-config.json` en la raíz. Pero para un proyecto personal es over-engineering. |
+| 2 workflows (e2e + release) corriendo en push y reportando "failure" sin jobs | Confusión innecesaria | `if: ${{ secrets.X != '' }}` salta el job pero GitHub marca el run como failure si el job era el único | Workflows opcionales deben usar `workflow_dispatch` trigger (manual) o `concurrency.cancel-in-progress: false` con un job que tenga una salida explícita |
+
+### Principios para CI en proyectos personales
+
+1. **Menos workflows = menos superficie de falla.** Empezá con un solo workflow que corra todas las quality gates. Agregá más solo cuando duela hacerlo manual.
+2. **Releases locales > CI para releases.** `gh release create v0.X.Y --notes-file CHANGELOG.md` tarda 5 segundos. Un workflow que hace lo mismo tarda 5 minutos + debugging.
+3. **Validá workflows localmente antes de pushear.** `act` (https://github.com/nektos/act) corre GitHub Actions localmente. Pero requiere Docker.
+4. **Si un workflow falla con "workflow file issue"**, el problema suele ser:
+   - Action que no existe (o versión que no existe)
+   - YAML mal formado (tab en lugar de spaces, indentación rota)
+   - `concurrency: cancel-in-progress: false` (GitHub parser rechaza boolean false; usar `${{ false }}`)
+5. **Medí antes de agregar.** "1 release por mes" no justifica 30 min de debugging de CI.
+
+### Cuando SÍ vale la pena CI de release
+
+- Equipo > 2 personas haciendo releases frecuentes (> 1/semana)
+- Necesitás artifact binario reproducible (ejecutable, container, release tarball)
+- Querés que `gh release list` muestre histórico automático
+- Compliance requiere traceability de cada artifact publicado
