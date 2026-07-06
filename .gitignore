@@ -34,3 +34,7 @@ test-results/
 
 # Misc
 *.bak
+
+# Local dev artifacts (no commitear)
+Desktop/                # subdirectorio del repo hermano
+supabase/.temp/        # cache del Supabase CLI
