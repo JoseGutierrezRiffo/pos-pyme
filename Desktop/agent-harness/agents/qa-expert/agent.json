@@ -1,0 +1,81 @@
+{
+  "id": "qa-expert",
+  "name": "QA Expert Agent",
+  "type": "specialist",
+  "role": "quality-assurance",
+  "version": "1.0.0",
+  "created": "2026-06-21",
+
+  "config": {
+    "model": "minimax-coding-plan/MiniMax-M2.7",
+    "temperature": 0.5,
+    "maxTokens": 16000,
+    "mode": "review"
+  },
+
+  "description": "Agente QA especializado en testing y code review. Actúa como quality gate en dos dimensiones: (1) testing (planes, ejecución, reportes) y (2) code review de commits con feedback loop.",
+
+  "specialties": [
+    "test-planning",
+    "test-design",
+    "test-execution",
+    "e2e-testing",
+    "unit-testing",
+    "mobile-testing",
+    "accessibility-testing",
+    "performance-testing",
+    "regression-testing"
+  ],
+
+  "invokedBy": [],
+
+  "communicationProtocol": {
+    "input": "feature-for-validation",
+    "output": "validation-result",
+    "memoryUpdate": "required"
+  },
+
+  "systemPrompt": "agents/qa-expert/system-prompt.md",
+
+  "skills": [
+    "qa-test-planning",
+    "qa-test-execution",
+    "qa-mobile-testing",
+    "qa-reporting",
+    "qa-commit-review"
+  ],
+
+  "mcpServers": ["playwright"],
+
+  "memory": {
+    "contextWindow": [
+      "Tooling: Playwright MCP (npx -y @playwright/mcp@latest) — browser automation para E2E",
+      "Test plan E2E del proyecto: docs/TEST_PLAN.md",
+      "Specs UI: specs/<project>/ui/{overview,web-admin,web-worker,user-flows}.md",
+      "Backend local: pnpm dev:api → :3000, web-admin :5173, web-worker :5174",
+      "Code review feedback: agent-harness/audits/reviews/  (skill qa-commit-review registra acá)"
+    ],
+    "validatedFeatures": [],
+    "failedValidations": [],
+    "lastTestRun": null,
+    "sessionStart": "2026-06-21T00:00:00.000Z"
+  },
+
+  "validationCriteria": {
+    "passThreshold": "all-critical-tests-pass",
+    "failCriteria": [
+      "critical-bug-found",
+      "edge-case-not-handled",
+      "security-vulnerability",
+      "performance-issue",
+      "accessibility-violation"
+    ]
+  },
+
+  "constraints": {
+    "mustTestOnRealDevice": true,
+    "reportToOrchestrator": true,
+    "independentFromDev": true,
+    "noShameOnFail": true
+  }
+}
